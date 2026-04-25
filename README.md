@@ -259,6 +259,141 @@ python scripts/classify_chinese_sentiment.py \
   --device auto
 ```
 
+## 一键顺序训练四个任务
+
+如果你希望四个任务按顺序自动下载数据并训练，可以直接运行：
+
+```bash
+bash scripts/train_all.sh
+```
+
+默认会依次训练：
+
+```text
+checkpoints/multi30k_en_de
+checkpoints/tatoeba_en_zh
+checkpoints/ag_news_classifier
+checkpoints/chnsenticorp
+```
+
+常用环境变量覆盖示例：
+
+```bash
+DEVICE=cuda \
+TRANSLATION_BATCH=128 \
+CLASSIFICATION_BATCH=128 \
+MULTI30K_EPOCHS=20 \
+TATOEBA_EPOCHS=30 \
+AG_NEWS_EPOCHS=10 \
+CHNSENTI_EPOCHS=10 \
+bash scripts/train_all.sh
+```
+
+如果显存不足，优先降低 batch：
+
+```bash
+TRANSLATION_BATCH=64 CLASSIFICATION_BATCH=64 bash scripts/train_all.sh
+```
+
+## 打包部署模型
+
+四个任务训练完成后，每个目录都会保存训练产物。翻译任务目录包含：
+
+```text
+best.pt
+last.pt
+config.json
+src_vocab.json
+tgt_vocab.json
+```
+
+分类任务目录包含：
+
+```text
+best.pt
+last.pt
+config.json
+vocab.json
+```
+
+部署一般使用 `best.pt`。生成部署包：
+
+```bash
+python scripts/package_deploy.py \
+  --checkpoint-root checkpoints \
+  --output deploy_package
+```
+
+如果有些任务还没训练完，只想先打包已有模型：
+
+```bash
+python scripts/package_deploy.py \
+  --checkpoint-root checkpoints \
+  --output deploy_package \
+  --allow-missing
+```
+
+生成目录结构：
+
+```text
+deploy_package/
+  README_DEPLOY.md
+  manifest.json
+  requirements.txt
+  deploy.sh
+  predict.py
+  src/
+  models/
+    multi30k_en_de/
+    tatoeba_en_zh/
+    ag_news_classifier/
+    chnsenticorp/
+```
+
+把整个 `deploy_package/` 复制到第三方设备后，在部署设备上运行：
+
+```bash
+cd deploy_package
+bash deploy.sh
+```
+
+如果设备上已有 Python 环境，不想创建虚拟环境：
+
+```bash
+cd deploy_package
+SKIP_VENV=1 bash deploy.sh
+```
+
+部署包统一推理命令：
+
+```bash
+python predict.py \
+  --task en_de_translation \
+  --text "a man is riding a bike" \
+  --device cpu
+```
+
+```bash
+python predict.py \
+  --task en_zh_translation \
+  --text "I like learning new languages." \
+  --device cpu
+```
+
+```bash
+python predict.py \
+  --task ag_news \
+  --text "Apple shares rose after revenue beat expectations." \
+  --device cpu
+```
+
+```bash
+python predict.py \
+  --task zh_sentiment \
+  --text "房间很干净，服务也很好。" \
+  --device cpu
+```
+
 ## 3090 参数建议
 
 - 翻译任务比分类任务更吃显存，建议先用 `d-model=256`、`layers=3` 跑通。
