@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local datasets and model outputs
+dataset/
+checkpoints/
+
+# Common local environment files
+.venv/
+venv/
+*.env
+
+# Editor and OS noise
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
