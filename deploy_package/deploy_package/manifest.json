@@ -1,0 +1,50 @@
+{
+  "tasks": [
+    {
+      "name": "multi30k_en_de",
+      "kind": "translation",
+      "description": "英德翻译",
+      "files": [
+        "best.pt",
+        "config.json",
+        "src_vocab.json",
+        "tgt_vocab.json"
+      ],
+      "skipped": false
+    },
+    {
+      "name": "tatoeba_en_zh",
+      "kind": "translation",
+      "description": "英中翻译",
+      "files": [
+        "best.pt",
+        "config.json",
+        "src_vocab.json",
+        "tgt_vocab.json"
+      ],
+      "skipped": false
+    },
+    {
+      "name": "ag_news_classifier",
+      "kind": "classification",
+      "description": "英文新闻分类",
+      "files": [
+        "best.pt",
+        "config.json",
+        "vocab.json"
+      ],
+      "skipped": false
+    },
+    {
+      "name": "chnsenticorp",
+      "kind": "classification",
+      "description": "中文情感分类",
+      "files": [
+        "best.pt",
+        "config.json",
+        "vocab.json"
+      ],
+      "skipped": false
+    }
+  ]
+}

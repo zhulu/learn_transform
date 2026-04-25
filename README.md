@@ -15,400 +15,46 @@
 pip install -r requirements.txt
 ```
 
-检查 CUDA 是否可用：
-
-```bash
-python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no cuda')"
-```
-
-如果输出 `True` 和显卡名称，训练脚本的 `--device auto` 会自动使用 GPU。
-
 ## 项目结构
 
 ```text
-src/
-  vocab.py                         词表构建、token/id 转换
-  data.py                          翻译数据读取、分词、batch padding
-  model.py                         手写 Transformer encoder-decoder
-  training.py                      翻译训练循环
-  inference.py                     翻译 checkpoint 加载和贪心解码
-  classifier.py                    Transformer encoder 分类模型
-  classification_data.py           AG News 数据读取
-  classification_training.py       AG News 训练循环
-  classification_inference.py      AG News 推理
-  chinese_sentiment_data.py        ChnSentiCorp 数据读取
-  chinese_sentiment_training.py    中文情感分类训练循环
-  chinese_sentiment_inference.py   中文情感分类推理
-
-scripts/
-  download_multi30k.py             下载 Multi30k
-  download_tatoeba_en_zh.py        下载 OPUS Tatoeba 英中语料
-  train_translation.py             翻译训练
-  evaluate_translation.py          翻译测试集评估
-  translate.py                     翻译单句推理
-  download_ag_news.py              下载 AG News
-  train_classification.py          AG News 训练
-  evaluate_classification.py       AG News 测试集评估
-  classify.py                      AG News 单句推理
-  download_chnsenticorp.py         下载 ChnSentiCorp
-  train_chinese_sentiment.py       中文情感分类训练
-  evaluate_chinese_sentiment.py    中文情感分类测试集评估
-  classify_chinese_sentiment.py    中文情感分类单句推理
+src/              # 核心源码 (模型定义、训练推理逻辑)
+scripts/          # 任务脚本 (数据下载、单任务训练、评估)
+web/              # Web 演示服务 (基于 FastAPI)
+deploy_package/   # 打包好的部署包 (包含模型权重和推理源码)
 ```
 
-## 任务一：英德翻译
+## Web 演示服务 (Transformer Lab)
 
-下载数据：
+为了更直观地展示模型效果，项目包含了一个交互式 Web 演示界面。
+
+### 功能亮点
+- **模型规格卡片**：实时展示当前任务的模型参数（Params）、隐藏层维度、层数及训练语料规模。
+- **可视化推理**：
+    - 翻译任务：实时生成译文。
+    - 分类任务：以进度条形式展示 Softmax 置信度分数。
+- **轻量化部署**：针对 CPU 环境优化，支持模型按需加载。
+
+### 启动方式
+1. 安装依赖：`pip install -r web/requirements.txt`
+2. 启动服务：`python web/main.py`
+3. 访问地址：`http://localhost:8000`
+
+## 核心任务说明
+
+(各任务具体训练和评估命令请参考 scripts/ 目录下的脚本或原 README 详细文档)
+
+## 打包部署
+
+使用 `scripts/package_deploy.py` 可以将训练好的 `best.pt` 权重与必要的推理源码打包到一个独立目录中，方便在无源码环境或生产环境中部署。
 
 ```bash
-python scripts/download_multi30k.py --root dataset/multi30k
+python scripts/package_deploy.py --checkpoint-root checkpoints --output deploy_package
 ```
 
-启动训练：
-
-```bash
-python scripts/train_translation.py \
-  --data-root dataset/multi30k \
-  --src-lang en \
-  --tgt-lang de \
-  --save-dir checkpoints/multi30k_en_de \
-  --epochs 20 \
-  --batch-size 128 \
-  --max-len 128 \
-  --d-model 256 \
-  --heads 4 \
-  --encoder-layers 3 \
-  --decoder-layers 3 \
-  --d-ff 1024 \
-  --dropout 0.1 \
-  --src-vocab-size 8000 \
-  --tgt-vocab-size 8000 \
-  --device auto
-```
-
-测试集评估：
-
-```bash
-python scripts/evaluate_translation.py \
-  --checkpoint checkpoints/multi30k_en_de/best.pt \
-  --data-root dataset/multi30k \
-  --src-lang en \
-  --tgt-lang de \
-  --split test \
-  --batch-size 128 \
-  --device auto
-```
-
-单句推理：
-
-```bash
-python scripts/translate.py \
-  --checkpoint checkpoints/multi30k_en_de/best.pt \
-  --text "a man is riding a bike" \
-  --device auto
-```
-
-## 任务二：英中翻译
-
-下载数据：
-
-```bash
-python scripts/download_tatoeba_en_zh.py \
-  --root dataset/tatoeba_en_zh \
-  --max-pairs 30000 \
-  --valid-size 1000 \
-  --test-size 1000
-```
-
-启动训练：
-
-```bash
-python scripts/train_translation.py \
-  --data-root dataset/tatoeba_en_zh \
-  --src-lang en \
-  --tgt-lang zh \
-  --save-dir checkpoints/tatoeba_en_zh \
-  --epochs 30 \
-  --batch-size 128 \
-  --max-len 80 \
-  --d-model 256 \
-  --heads 4 \
-  --encoder-layers 3 \
-  --decoder-layers 3 \
-  --d-ff 1024 \
-  --dropout 0.1 \
-  --src-vocab-size 12000 \
-  --tgt-vocab-size 8000 \
-  --tgt-char-level \
-  --device auto
-```
-
-测试集评估：
-
-```bash
-python scripts/evaluate_translation.py \
-  --checkpoint checkpoints/tatoeba_en_zh/best.pt \
-  --data-root dataset/tatoeba_en_zh \
-  --src-lang en \
-  --tgt-lang zh \
-  --split test \
-  --batch-size 128 \
-  --device auto
-```
-
-单句推理：
-
-```bash
-python scripts/translate.py \
-  --checkpoint checkpoints/tatoeba_en_zh/best.pt \
-  --text "I like learning new languages." \
-  --device auto
-```
-
-说明：当前中文端默认字符级 token，推理输出可能会在中文字符之间带空格。后续可以加中文 detokenize。
-
-## 任务三：英文新闻分类
-
-下载数据：
-
-```bash
-python scripts/download_ag_news.py --root dataset/ag_news
-```
-
-启动训练：
-
-```bash
-python scripts/train_classification.py \
-  --data-root dataset/ag_news \
-  --save-dir checkpoints/ag_news_classifier \
-  --epochs 10 \
-  --batch-size 128 \
-  --max-len 128 \
-  --d-model 256 \
-  --heads 4 \
-  --layers 3 \
-  --d-ff 1024 \
-  --dropout 0.1 \
-  --vocab-size 30000 \
-  --device auto
-```
-
-测试集评估：
-
-```bash
-python scripts/evaluate_classification.py \
-  --checkpoint checkpoints/ag_news_classifier/best.pt \
-  --data-root dataset/ag_news \
-  --split test \
-  --batch-size 128 \
-  --device auto
-```
-
-单句推理：
-
-```bash
-python scripts/classify.py \
-  --checkpoint checkpoints/ag_news_classifier/best.pt \
-  --text "Apple shares rose after the company reported stronger quarterly revenue." \
-  --device auto
-```
-
-## 任务四：中文情感分类
-
-下载数据：
-
-```bash
-python scripts/download_chnsenticorp.py --root dataset/chnsenticorp
-```
-
-启动训练：
-
-```bash
-python scripts/train_chinese_sentiment.py \
-  --data-root dataset/chnsenticorp \
-  --save-dir checkpoints/chnsenticorp \
-  --epochs 10 \
-  --batch-size 128 \
-  --max-len 256 \
-  --d-model 256 \
-  --heads 4 \
-  --layers 3 \
-  --d-ff 1024 \
-  --dropout 0.1 \
-  --vocab-size 8000 \
-  --device auto
-```
-
-测试集评估：
-
-```bash
-python scripts/evaluate_chinese_sentiment.py \
-  --checkpoint checkpoints/chnsenticorp/best.pt \
-  --data-root dataset/chnsenticorp \
-  --split test \
-  --batch-size 128 \
-  --device auto
-```
-
-单句推理：
-
-```bash
-python scripts/classify_chinese_sentiment.py \
-  --checkpoint checkpoints/chnsenticorp/best.pt \
-  --text "房间很干净，服务也很好，下次还会再来。" \
-  --device auto
-```
-
-## 一键顺序训练四个任务
-
-如果你希望四个任务按顺序自动下载数据并训练，可以直接运行：
-
-```bash
-bash scripts/train_all.sh
-```
-
-默认会依次训练：
-
-```text
-checkpoints/multi30k_en_de
-checkpoints/tatoeba_en_zh
-checkpoints/ag_news_classifier
-checkpoints/chnsenticorp
-```
-
-常用环境变量覆盖示例：
-
-```bash
-DEVICE=cuda \
-TRANSLATION_BATCH=128 \
-CLASSIFICATION_BATCH=128 \
-MULTI30K_EPOCHS=20 \
-TATOEBA_EPOCHS=30 \
-AG_NEWS_EPOCHS=10 \
-CHNSENTI_EPOCHS=10 \
-bash scripts/train_all.sh
-```
-
-如果显存不足，优先降低 batch：
-
-```bash
-TRANSLATION_BATCH=64 CLASSIFICATION_BATCH=64 bash scripts/train_all.sh
-```
-
-## 打包部署模型
-
-四个任务训练完成后，每个目录都会保存训练产物。翻译任务目录包含：
-
-```text
-best.pt
-last.pt
-config.json
-src_vocab.json
-tgt_vocab.json
-```
-
-分类任务目录包含：
-
-```text
-best.pt
-last.pt
-config.json
-vocab.json
-```
-
-部署一般使用 `best.pt`。生成部署包：
-
-```bash
-python scripts/package_deploy.py \
-  --checkpoint-root checkpoints \
-  --output deploy_package
-```
-
-如果有些任务还没训练完，只想先打包已有模型：
-
-```bash
-python scripts/package_deploy.py \
-  --checkpoint-root checkpoints \
-  --output deploy_package \
-  --allow-missing
-```
-
-生成目录结构：
-
-```text
-deploy_package/
-  README_DEPLOY.md
-  manifest.json
-  requirements.txt
-  deploy.sh
-  predict.py
-  src/
-  models/
-    multi30k_en_de/
-    tatoeba_en_zh/
-    ag_news_classifier/
-    chnsenticorp/
-```
-
-把整个 `deploy_package/` 复制到第三方设备后，在部署设备上运行：
-
-```bash
-cd deploy_package
-bash deploy.sh
-```
-
-如果设备上已有 Python 环境，不想创建虚拟环境：
-
-```bash
-cd deploy_package
-SKIP_VENV=1 bash deploy.sh
-```
-
-部署包统一推理命令：
-
-```bash
-python predict.py \
-  --task en_de_translation \
-  --text "a man is riding a bike" \
-  --device cpu
-```
-
-```bash
-python predict.py \
-  --task en_zh_translation \
-  --text "I like learning new languages." \
-  --device cpu
-```
-
-```bash
-python predict.py \
-  --task ag_news \
-  --text "Apple shares rose after revenue beat expectations." \
-  --device cpu
-```
-
-```bash
-python predict.py \
-  --task zh_sentiment \
-  --text "房间很干净，服务也很好。" \
-  --device cpu
-```
-
-## 3090 参数建议
-
-- 翻译任务比分类任务更吃显存，建议先用 `d-model=256`、`layers=3` 跑通。
-- 如果显存不足，优先降低 `--batch-size`，再降低 `--max-len`。
-- 英中翻译建议先使用 `--tgt-char-level`，避免额外中文分词依赖。
-- 分类任务在 3090 上可以把 batch size 提高到 256，但先用 128 更稳。
-- 如果验证集 loss 明显高于训练集 loss，可以尝试 `--dropout 0.2`。
-
-## 数据目录
-
-数据集和模型权重不会提交到 Git：
-
-```text
-dataset/
-checkpoints/
-```
-
-需要在新机器上重新运行对应的下载脚本。
+## 数据与模型
+
+数据集和模型权重默认不提交：
+- `dataset/` (原始数据)
+- `checkpoints/` (训练产物)
+- `*.tar`, `*.gz` (压缩包)

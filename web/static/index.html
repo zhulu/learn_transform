@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer Lab - 模型演示</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-color: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout { grid-template-columns: 1fr; }
+        }
+
+        .info-panel {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .info-label { color: var(--text-muted); }
+        .info-value { font-weight: 600; color: var(--primary-color); }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: #4338ca;
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        select, textarea {
+            width: 100%;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        textarea { height: 120px; resize: none; }
+
+        button {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+        .result-section {
+            margin-top: 30px;
+            border-radius: 16px;
+            padding: 24px;
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-success { background: #f0fdf4; border: 2px solid #bbf7d0; }
+        .result-error { background: #fef2f2; border: 2px solid #fecaca; }
+
+        .result-header {
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #result-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .score-container { margin-top: 20px; }
+        .score-row { margin-bottom: 12px; }
+        .score-meta { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: 600; }
+        .progress-bg { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary-color); transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #fff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        footer { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Transformer Lab</h1>
+            <p>从零手写的 Transformer 模型架构与推理演示</p>
+        </header>
+
+        <div class="main-card">
+            <div class="grid-layout">
+                <!-- Left: Controls -->
+                <div class="controls">
+                    <div class="form-group">
+                        <label>选择推理任务</label>
+                        <select id="task-select">
+                            <option value="en_de_translation">英德翻译 (En -> De)</option>
+                            <option value="en_zh_translation">英中翻译 (En -> Zh)</option>
+                            <option value="ag_news">英文新闻分类 (AG News)</option>
+                            <option value="zh_sentiment">中文情感分类 (Sentiment)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>输入文本</label>
+                        <textarea id="input-text" placeholder="输入待处理的文本..."></textarea>
+                    </div>
+
+                    <button id="run-btn">
+                        <span id="btn-text">立即运行推理</span>
+                        <div class="loader" id="btn-loader"></div>
+                    </button>
+                </div>
+
+                <!-- Right: Model Specs -->
+                <div class="info-panel">
+                    <div id="model-tag" class="tag">Encoder-Decoder</div>
+                    <h3><i class="bi bi-cpu"></i> 模型规格</h3>
+                    <div id="specs-list">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="result-box" class="result-section">
+                <div class="result-header">
+                    <i class="bi bi-lightning-charge-fill"></i> 推理结果
+                </div>
+                <div id="result-text">---</div>
+                <div id="score-viz" class="score-container"></div>
+            </div>
+        </div>
+
+        <footer>
+            Built with PyTorch & FastAPI | 基于 CPU 推理模式
+        </footer>
+    </div>
+
+    <script>
+        const taskSpecs = {
+            'en_de_translation': {
+                tag: 'Encoder-Decoder',
+                architecture: 'Transformer (Base)',
+                params: '11.05 Million',
+                layers: '3 Enc + 3 Dec',
+                heads: '4',
+                d_model: '256',
+                data: '29,000 Pairs (Multi30k)',
+                placeholder: 'A man in a blue shirt is standing in front of a building.'
+            },
+            'en_zh_translation': {
+                tag: 'Encoder-Decoder',
+                architecture: 'Transformer (Base)',
+                params: '8.68 Million',
+                layers: '3 Enc + 3 Dec',
+                heads: '4',
+                d_model: '256',
+                data: '27,999 Pairs (Tatoeba)',
+                placeholder: 'I like learning new languages and meeting people.'
+            },
+            'ag_news': {
+                tag: 'Encoder-only',
+                architecture: 'Transformer Encoder',
+                params: '10.05 Million',
+                layers: '3 Layers',
+                heads: '4',
+                d_model: '256',
+                data: '108,000 News (AG News)',
+                placeholder: 'Global markets rallied today as tech shares surged following earnings.'
+            },
+            'zh_sentiment': {
+                tag: 'Encoder-only',
+                architecture: 'Transformer Encoder',
+                params: '3.30 Million',
+                layers: '3 Layers',
+                heads: '4',
+                d_model: '256',
+                data: '9,146 Reviews (ChnSentiCorp)',
+                placeholder: '这家酒店的服务态度非常好，房间打扫得也很干净。'
+            }
+        };
+
+        const taskSelect = document.getElementById('task-select');
+        const inputArea = document.getElementById('input-text');
+        const specsList = document.getElementById('specs-list');
+        const modelTag = document.getElementById('model-tag');
+        const runBtn = document.getElementById('run-btn');
+        const btnLoader = document.getElementById('btn-loader');
+        const btnText = document.getElementById('btn-text');
+        const resultBox = document.getElementById('result-box');
+        const resultText = document.getElementById('result-text');
+        const scoreViz = document.getElementById('score-viz');
+
+        function updateUI() {
+            const task = taskSelect.value;
+            const spec = taskSpecs[task];
+            
+            modelTag.innerText = spec.tag;
+            inputArea.placeholder = spec.placeholder;
+            
+            specsList.innerHTML = `
+                <div class="info-item"><span class="info-label">架构</span><span class="info-value">${spec.architecture}</span></div>
+                <div class="info-item"><span class="info-label">总参数量</span><span class="info-value">${spec.params}</span></div>
+                <div class="info-item"><span class="info-label">网络层数</span><span class="info-value">${spec.layers}</span></div>
+                <div class="info-item"><span class="info-label">注意力头数</span><span class="info-value">${spec.heads}</span></div>
+                <div class="info-item"><span class="info-label">隐藏层维度</span><span class="info-value">${spec.d_model}</span></div>
+                <div class="info-item"><span class="info-label">训练规模</span><span class="info-value">${spec.data}</span></div>
+            `;
+            
+            resultBox.style.display = 'none';
+        }
+
+        taskSelect.addEventListener('change', updateUI);
+        window.onload = updateUI;
+
+        runBtn.addEventListener('click', async () => {
+            const text = inputArea.value.trim();
+            if (!text) return alert('请输入文本');
+
+            // Loading state
+            runBtn.disabled = true;
+            btnLoader.style.display = 'block';
+            btnText.innerText = '正在计算...';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ task: taskSelect.value, text: text }),
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || '推理失败');
+
+                resultBox.className = 'result-section result-success';
+                scoreViz.innerHTML = '';
+
+                if (data.result !== undefined) {
+                    // Translation
+                    resultText.innerText = data.result;
+                } else {
+                    // Classification
+                    resultText.innerHTML = `${data.label} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(置信度 ${(data.probability * 100).toFixed(1)}%)</span>`;
+                    
+                    if (data.scores) {
+                        Object.entries(data.scores).sort((a,b) => b[1]-a[1]).forEach(([name, val]) => {
+                            const percent = (val * 100).toFixed(1);
+                            scoreViz.innerHTML += `
+                                <div class="score-row">
+                                    <div class="score-meta"><span>${name}</span><span>${percent}%</span></div>
+                                    <div class="progress-bg"><div class="progress-fill" style="width: ${percent}%"></div></div>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+                resultBox.style.display = 'block';
+            } catch (e) {
+                resultBox.className = 'result-section result-error';
+                resultText.innerText = e.message;
+                resultBox.style.display = 'block';
+            } finally {
+                runBtn.disabled = false;
+                btnLoader.style.display = 'none';
+                btnText.innerText = '立即运行推理';
+            }
+        });
+    </script>
+</body>
+</html>
