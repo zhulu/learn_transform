@@ -18,12 +18,12 @@ DEVICE="${DEVICE:-auto}"
 TRANSLATION_BATCH="${TRANSLATION_BATCH:-128}"
 CLASSIFICATION_BATCH="${CLASSIFICATION_BATCH:-128}"
 
-MULTI30K_EPOCHS="${MULTI30K_EPOCHS:-20}"
-TATOEBA_EPOCHS="${TATOEBA_EPOCHS:-30}"
-AG_NEWS_EPOCHS="${AG_NEWS_EPOCHS:-10}"
-CHNSENTI_EPOCHS="${CHNSENTI_EPOCHS:-10}"
-LCSTS_EPOCHS="${LCSTS_EPOCHS:-20}"
-LCSTS_TRAIN_SIZE="${LCSTS_TRAIN_SIZE:-100000}"
+MULTI30K_EPOCHS="${MULTI30K_EPOCHS:-30}"
+TATOEBA_EPOCHS="${TATOEBA_EPOCHS:-50}"
+AG_NEWS_EPOCHS="${AG_NEWS_EPOCHS:-15}"
+CHNSENTI_EPOCHS="${CHNSENTI_EPOCHS:-15}"
+LCSTS_EPOCHS="${LCSTS_EPOCHS:-25}"
+LCSTS_TRAIN_SIZE="${LCSTS_TRAIN_SIZE:-200000}"
 LCSTS_VALID_SIZE="${LCSTS_VALID_SIZE:-4000}"
 LCSTS_TEST_SIZE="${LCSTS_TEST_SIZE:-4000}"
 LCSTS_BATCH="${LCSTS_BATCH:-64}"
@@ -109,14 +109,14 @@ python scripts/train_translation.py \
   --epochs "${MULTI30K_EPOCHS}" \
   --batch-size "${TRANSLATION_BATCH}" \
   --max-len 128 \
-  --d-model 256 \
-  --heads 4 \
-  --encoder-layers 3 \
-  --decoder-layers 3 \
-  --d-ff 1024 \
+  --d-model 512 \
+  --heads 8 \
+  --encoder-layers 6 \
+  --decoder-layers 6 \
+  --d-ff 2048 \
   --dropout 0.1 \
-  --src-vocab-size 8000 \
-  --tgt-vocab-size 8000 \
+  --src-vocab-size 10000 \
+  --tgt-vocab-size 10000 \
   --device "${DEVICE}"
 
 echo "==> 训练任务二：英中翻译"
@@ -128,14 +128,14 @@ python scripts/train_translation.py \
   --epochs "${TATOEBA_EPOCHS}" \
   --batch-size "${TRANSLATION_BATCH}" \
   --max-len 80 \
-  --d-model 256 \
-  --heads 4 \
-  --encoder-layers 3 \
-  --decoder-layers 3 \
-  --d-ff 1024 \
+  --d-model 512 \
+  --heads 8 \
+  --encoder-layers 6 \
+  --decoder-layers 6 \
+  --d-ff 2048 \
   --dropout 0.1 \
-  --src-vocab-size 12000 \
-  --tgt-vocab-size 8000 \
+  --src-vocab-size 16000 \
+  --tgt-vocab-size 10000 \
   --tgt-char-level \
   --device "${DEVICE}"
 
@@ -146,10 +146,10 @@ python scripts/train_classification.py \
   --epochs "${AG_NEWS_EPOCHS}" \
   --batch-size "${CLASSIFICATION_BATCH}" \
   --max-len 128 \
-  --d-model 256 \
-  --heads 4 \
-  --layers 3 \
-  --d-ff 1024 \
+  --d-model 512 \
+  --heads 8 \
+  --layers 6 \
+  --d-ff 2048 \
   --dropout 0.1 \
   --vocab-size 30000 \
   --device "${DEVICE}"
@@ -161,12 +161,12 @@ python scripts/train_chinese_sentiment.py \
   --epochs "${CHNSENTI_EPOCHS}" \
   --batch-size "${CLASSIFICATION_BATCH}" \
   --max-len 256 \
-  --d-model 256 \
-  --heads 4 \
-  --layers 3 \
-  --d-ff 1024 \
+  --d-model 512 \
+  --heads 8 \
+  --layers 6 \
+  --d-ff 2048 \
   --dropout 0.1 \
-  --vocab-size 8000 \
+  --vocab-size 10000 \
   --device "${DEVICE}"
 
 echo "==> 训练任务五：中文中心思想/摘要生成"
@@ -178,14 +178,14 @@ python scripts/train_translation.py \
   --epochs "${LCSTS_EPOCHS}" \
   --batch-size "${LCSTS_BATCH}" \
   --max-len 256 \
-  --d-model 256 \
-  --heads 4 \
-  --encoder-layers 3 \
-  --decoder-layers 3 \
-  --d-ff 1024 \
-  --dropout 0.2 \
-  --src-vocab-size 12000 \
-  --tgt-vocab-size 8000 \
+  --d-model 512 \
+  --heads 8 \
+  --encoder-layers 6 \
+  --decoder-layers 6 \
+  --d-ff 2048 \
+  --dropout 0.1 \
+  --src-vocab-size 16000 \
+  --tgt-vocab-size 10000 \
   --src-char-level \
   --tgt-char-level \
   --device "${DEVICE}"

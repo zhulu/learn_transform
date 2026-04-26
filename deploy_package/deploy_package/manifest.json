@@ -25,6 +25,18 @@
       "skipped": false
     },
     {
+      "name": "lcsts_summary",
+      "kind": "translation",
+      "description": "中文中心思想/摘要生成",
+      "files": [
+        "best.pt",
+        "config.json",
+        "src_vocab.json",
+        "tgt_vocab.json"
+      ],
+      "skipped": false
+    },
+    {
       "name": "ag_news_classifier",
       "kind": "classification",
       "description": "英文新闻分类",

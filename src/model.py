@@ -145,11 +145,13 @@ class EncoderLayer(nn.Module):
 
     def forward(self, x: torch.Tensor, src_mask: torch.Tensor) -> torch.Tensor:
         # encoder self-attention 中 query/key/value 都来自源句自身。
-        attn = self.self_attn(x, x, x, src_mask)
-        # 残差连接保留原始信息，LayerNorm 稳定训练。
-        x = self.norm1(x + self.dropout(attn))
-        ff = self.ff(x)
-        return self.norm2(x + self.dropout(ff))
+        nx = self.norm1(x)
+        attn = self.self_attn(nx, nx, nx, src_mask)
+        x = x + self.dropout(attn)
+        # feed-forward
+        nx2 = self.norm2(x)
+        ff = self.ff(nx2)
+        return x + self.dropout(ff)
 
 
 class DecoderLayer(nn.Module):
@@ -181,13 +183,17 @@ class DecoderLayer(nn.Module):
         src_mask: torch.Tensor,
     ) -> torch.Tensor:
         # masked self-attention：防止训练时偷看未来目标词。
-        self_attn = self.self_attn(x, x, x, tgt_mask)
-        x = self.norm1(x + self.dropout(self_attn))
+        nx1 = self.norm1(x)
+        self_attn = self.self_attn(nx1, nx1, nx1, tgt_mask)
+        x = x + self.dropout(self_attn)
         # cross-attention：query 来自 decoder，key/value 来自 encoder memory。
-        cross_attn = self.cross_attn(x, memory, memory, src_mask)
-        x = self.norm2(x + self.dropout(cross_attn))
-        ff = self.ff(x)
-        return self.norm3(x + self.dropout(ff))
+        nx2 = self.norm2(x)
+        cross_attn = self.cross_attn(nx2, memory, memory, src_mask)
+        x = x + self.dropout(cross_attn)
+        # feed-forward
+        nx3 = self.norm3(x)
+        ff = self.ff(nx3)
+        return x + self.dropout(ff)
 
 
 class Transformer(nn.Module):
@@ -231,9 +237,11 @@ class Transformer(nn.Module):
         self.encoder = nn.ModuleList(
             [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_encoder_layers)]
         )
+        self.encoder_norm = nn.LayerNorm(d_model)
         self.decoder = nn.ModuleList(
             [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_decoder_layers)]
         )
+        self.decoder_norm = nn.LayerNorm(d_model)
         self.generator = nn.Linear(d_model, tgt_vocab_size)
         self._reset_parameters()
 
@@ -260,7 +268,7 @@ class Transformer(nn.Module):
         x = self.dropout(self.positional(self.src_embed(src) * math.sqrt(self.d_model)))
         for layer in self.encoder:
             x = layer(x, src_mask)
-        return x
+        return self.encoder_norm(x)
 
     def decode(
         self,
@@ -292,7 +300,7 @@ class Transformer(nn.Module):
             )
         for layer in self.decoder:
             x = layer(x, memory, tgt_mask, src_mask)
-        return x
+        return self.decoder_norm(x)
 
     def make_src_mask(self, src: torch.Tensor) -> torch.Tensor:
         """构造源端 padding mask。

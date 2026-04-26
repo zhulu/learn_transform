@@ -142,6 +142,9 @@ def train_classification(config: ClassificationConfig) -> None:
 
     model = create_classifier(config, vocab).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=config.lr, steps_per_epoch=len(train_loader), epochs=config.epochs
+    )
     criterion = nn.CrossEntropyLoss()
     use_amp = config.amp and device.type == "cuda"
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
@@ -167,6 +170,7 @@ def train_classification(config: ClassificationConfig) -> None:
             criterion,
             device,
             optimizer=optimizer,
+            scheduler=scheduler,
             scaler=scaler,
             use_amp=use_amp,
             grad_clip=config.grad_clip,
@@ -178,6 +182,7 @@ def train_classification(config: ClassificationConfig) -> None:
             criterion,
             device,
             optimizer=None,
+            scheduler=None,
             scaler=None,
             use_amp=False,
             grad_clip=0.0,
@@ -228,10 +233,11 @@ def run_epoch(
     criterion: nn.Module,
     device: torch.device,
     optimizer: torch.optim.Optimizer | None,
-    scaler: torch.amp.GradScaler | None,
-    use_amp: bool,
-    grad_clip: float,
-    desc: str,
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+    scaler: torch.amp.GradScaler | None = None,
+    use_amp: bool = False,
+    grad_clip: float = 0.0,
+    desc: str = "",
 ) -> tuple[float, float]:
     """运行一个分类任务 epoch，返回平均 loss 和准确率。"""
     training = optimizer is not None
@@ -272,3 +278,4 @@ def run_epoch(
         )
 
     return total_loss / max(1, total_examples), total_correct / max(1, total_examples)
+ect / max(1, total_examples)

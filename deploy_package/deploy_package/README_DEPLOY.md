@@ -21,11 +21,13 @@ python predict.py --task en_de_translation --text "a man is riding a bike" --dev
 python predict.py --task en_zh_translation --text "I like learning new languages." --device cpu
 python predict.py --task ag_news --text "Apple shares rose after revenue beat expectations." --device cpu
 python predict.py --task zh_sentiment --text "房间很干净，服务也很好。" --device cpu
+python predict.py --task lcsts_summary --text "国务院新闻办公室今天举行发布会，介绍当前经济运行情况。" --device cpu --max-len 40
 ```
 
 ## 已包含模型
 
 - `multi30k_en_de`: 英德翻译
 - `tatoeba_en_zh`: 英中翻译
+- `lcsts_summary`: 中文中心思想/摘要生成
 - `ag_news_classifier`: 英文新闻分类
 - `chnsenticorp`: 中文情感分类

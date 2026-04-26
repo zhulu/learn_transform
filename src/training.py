@@ -252,10 +252,11 @@ def run_epoch(
     criterion: nn.Module,
     device: torch.device,
     optimizer: torch.optim.Optimizer | None,
-    scaler: torch.amp.GradScaler | None,
-    use_amp: bool,
-    grad_clip: float,
-    desc: str,
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+    scaler: torch.amp.GradScaler | None = None,
+    use_amp: bool = False,
+    grad_clip: float = 0.0,
+    desc: str = "",
 ) -> float:
     """运行一个 epoch。
 
@@ -303,11 +304,15 @@ def run_epoch(
                     torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
                 scaler.step(optimizer)
                 scaler.update()
+                if scheduler is not None:
+                    scheduler.step()
 
         # 用非 pad token 数量做加权平均，避免短 batch 和长 batch 权重不一致。
         ntokens = (tgt_out != model.tgt_pad_id).sum().item()
         total_loss += loss.item() * ntokens
         total_tokens += ntokens
-        iterator.set_postfix(loss=total_loss / max(1, total_tokens))
+        # 加上当前学习率显示
+        lr_val = optimizer.param_groups[0]["lr"] if optimizer else 0.0
+        iterator.set_postfix(loss=total_loss / max(1, total_tokens), lr=f"{lr_val:.2e}")
 
     return total_loss / max(1, total_tokens)

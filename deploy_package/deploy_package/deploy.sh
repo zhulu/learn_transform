@@ -23,3 +23,4 @@ echo "python predict.py --task en_de_translation --text \"a man is riding a bike
 echo "python predict.py --task en_zh_translation --text \"I like learning new languages.\" --device cpu"
 echo "python predict.py --task ag_news --text \"Apple shares rose after revenue beat expectations.\" --device cpu"
 echo "python predict.py --task zh_sentiment --text \"房间很干净，服务也很好。\" --device cpu"
+echo "python predict.py --task lcsts_summary --text \"国务院新闻办公室今天举行发布会，介绍当前经济运行情况和下一阶段政策安排。\" --device cpu --max-len 40"

@@ -235,10 +235,11 @@ def run_epoch(
     criterion: nn.Module,
     device: torch.device,
     optimizer: torch.optim.Optimizer | None,
-    scaler: torch.amp.GradScaler | None,
-    use_amp: bool,
-    grad_clip: float,
-    desc: str,
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+    scaler: torch.amp.GradScaler | None = None,
+    use_amp: bool = False,
+    grad_clip: float = 0.0,
+    desc: str = "",
 ) -> tuple[float, float]:
     """运行一个 epoch，返回 loss 和 accuracy。"""
     training = optimizer is not None
@@ -267,15 +268,19 @@ def run_epoch(
                     torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
                 scaler.step(optimizer)
                 scaler.update()
+                if scheduler is not None:
+                    scheduler.step()
 
         preds = logits.argmax(dim=-1)
         batch_size = labels.size(0)
         total_loss += loss.item() * batch_size
         total_correct += (preds == labels).sum().item()
         total_examples += batch_size
+        lr_val = optimizer.param_groups[0]["lr"] if optimizer else 0.0
         iterator.set_postfix(
             loss=total_loss / max(1, total_examples),
             acc=total_correct / max(1, total_examples),
+            lr=f"{lr_val:.2e}",
         )
 
     return total_loss / max(1, total_examples), total_correct / max(1, total_examples)
