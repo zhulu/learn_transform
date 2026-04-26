@@ -278,4 +278,3 @@ def run_epoch(
         )
 
     return total_loss / max(1, total_examples), total_correct / max(1, total_examples)
-ect / max(1, total_examples)
