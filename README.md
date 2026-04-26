@@ -44,6 +44,85 @@ deploy_package/   # 打包好的部署包 (包含模型权重和推理源码)
 
 (各任务具体训练和评估命令请参考 scripts/ 目录下的脚本或原 README 详细文档)
 
+## 可选任务：中文中心思想/摘要生成
+
+这个任务使用 LCSTS 中文短文本摘要数据，字段含义为：
+
+```text
+text     原文
+summary  中心思想/摘要/标题式概括
+```
+
+下载并整理语料：
+
+```bash
+python scripts/download_lcsts_summary.py \
+  --root dataset/lcsts_summary \
+  --train-size 100000 \
+  --valid-size 4000 \
+  --test-size 4000
+```
+
+脚本会生成现有 seq2seq 接口可直接使用的文件：
+
+```text
+dataset/lcsts_summary/train.src
+dataset/lcsts_summary/train.tgt
+dataset/lcsts_summary/valid.src
+dataset/lcsts_summary/valid.tgt
+dataset/lcsts_summary/test.src
+dataset/lcsts_summary/test.tgt
+```
+
+3090 推荐训练命令：
+
+```bash
+python scripts/train_translation.py \
+  --data-root dataset/lcsts_summary \
+  --src-lang src \
+  --tgt-lang tgt \
+  --save-dir checkpoints/lcsts_summary \
+  --epochs 20 \
+  --batch-size 64 \
+  --max-len 256 \
+  --d-model 256 \
+  --heads 4 \
+  --encoder-layers 3 \
+  --decoder-layers 3 \
+  --d-ff 1024 \
+  --dropout 0.2 \
+  --src-vocab-size 12000 \
+  --tgt-vocab-size 8000 \
+  --src-char-level \
+  --tgt-char-level \
+  --device auto
+```
+
+测试集评估：
+
+```bash
+python scripts/evaluate_translation.py \
+  --checkpoint checkpoints/lcsts_summary/best.pt \
+  --data-root dataset/lcsts_summary \
+  --src-lang src \
+  --tgt-lang tgt \
+  --split test \
+  --batch-size 64 \
+  --device auto
+```
+
+单条文章生成中心思想：
+
+```bash
+python scripts/translate.py \
+  --checkpoint checkpoints/lcsts_summary/best.pt \
+  --text "国务院新闻办公室今天举行发布会，介绍当前经济运行情况和下一阶段政策安排。" \
+  --max-len 40 \
+  --device auto
+```
+
+接口结论：暂时不需要修改训练、测试接口。中心思想生成和翻译一样都是 `输入序列 -> 输出序列`，可以直接复用 `train_translation.py`、`evaluate_translation.py` 和 `translate.py`。后续如果要更严谨评估摘要质量，再单独加 ROUGE/chrF 等摘要指标。
+
 ## 打包部署
 
 使用 `scripts/package_deploy.py` 可以将训练好的 `best.pt` 权重与必要的推理源码打包到一个独立目录中，方便在无源码环境或生产环境中部署。
