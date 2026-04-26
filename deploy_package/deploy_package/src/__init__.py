@@ -1,1 +1,0 @@
-"""Minimal Transformer training stack."""

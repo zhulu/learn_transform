@@ -10,10 +10,13 @@ set -euo pipefail
 #
 # 默认参数按 RTX/ATX 3090 24G 做保守设置。需要临时调整时，可以用环境变量覆盖：
 # DEVICE=cuda TRANSLATION_BATCH=96 bash scripts/train_all.sh
+# 从第三个任务开始训练：
+# START_FROM=3 bash scripts/train_all.sh
 
 DATA_ROOT="${DATA_ROOT:-dataset}"
 CKPT_ROOT="${CKPT_ROOT:-checkpoints}"
 DEVICE="${DEVICE:-auto}"
+START_FROM="${START_FROM:-1}"
 
 TRANSLATION_BATCH="${TRANSLATION_BATCH:-128}"
 CLASSIFICATION_BATCH="${CLASSIFICATION_BATCH:-128}"
@@ -100,6 +103,7 @@ else
     --test-size "${LCSTS_TEST_SIZE}"
 fi
 
+if [[ "${START_FROM}" -le 1 ]]; then
 echo "==> 训练任务一：英德翻译"
 python scripts/train_translation.py \
   --data-root "${DATA_ROOT}/multi30k" \
@@ -118,7 +122,9 @@ python scripts/train_translation.py \
   --src-vocab-size 10000 \
   --tgt-vocab-size 10000 \
   --device "${DEVICE}"
+fi
 
+if [[ "${START_FROM}" -le 2 ]]; then
 echo "==> 训练任务二：英中翻译"
 python scripts/train_translation.py \
   --data-root "${DATA_ROOT}/tatoeba_en_zh" \
@@ -138,7 +144,9 @@ python scripts/train_translation.py \
   --tgt-vocab-size 10000 \
   --tgt-char-level \
   --device "${DEVICE}"
+fi
 
+if [[ "${START_FROM}" -le 3 ]]; then
 echo "==> 训练任务三：英文新闻分类"
 python scripts/train_classification.py \
   --data-root "${DATA_ROOT}/ag_news" \
@@ -153,7 +161,9 @@ python scripts/train_classification.py \
   --dropout 0.1 \
   --vocab-size 30000 \
   --device "${DEVICE}"
+fi
 
+if [[ "${START_FROM}" -le 4 ]]; then
 echo "==> 训练任务四：中文情感分类"
 python scripts/train_chinese_sentiment.py \
   --data-root "${DATA_ROOT}/chnsenticorp" \
@@ -168,7 +178,9 @@ python scripts/train_chinese_sentiment.py \
   --dropout 0.1 \
   --vocab-size 10000 \
   --device "${DEVICE}"
+fi
 
+if [[ "${START_FROM}" -le 5 ]]; then
 echo "==> 训练任务五：中文中心思想/摘要生成"
 python scripts/train_translation.py \
   --data-root "${DATA_ROOT}/lcsts_summary" \
@@ -189,7 +201,8 @@ python scripts/train_translation.py \
   --src-char-level \
   --tgt-char-level \
   --device "${DEVICE}"
+fi
 
-echo "==> 五个任务训练完成"
+echo "==> 训练流程完成"
 echo "模型目录：${CKPT_ROOT}"
 echo "下一步可运行：python scripts/package_deploy.py --checkpoint-root ${CKPT_ROOT} --output deploy_package"
