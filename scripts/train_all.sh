@@ -28,20 +28,77 @@ LCSTS_VALID_SIZE="${LCSTS_VALID_SIZE:-4000}"
 LCSTS_TEST_SIZE="${LCSTS_TEST_SIZE:-4000}"
 LCSTS_BATCH="${LCSTS_BATCH:-64}"
 
+has_files() {
+  local file
+  for file in "$@"; do
+    if [[ ! -s "${file}" ]]; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 echo "==> 下载/准备数据"
-python scripts/download_multi30k.py --root "${DATA_ROOT}/multi30k"
-python scripts/download_tatoeba_en_zh.py \
-  --root "${DATA_ROOT}/tatoeba_en_zh" \
-  --max-pairs 30000 \
-  --valid-size 1000 \
-  --test-size 1000
-python scripts/download_ag_news.py --root "${DATA_ROOT}/ag_news"
-python scripts/download_chnsenticorp.py --root "${DATA_ROOT}/chnsenticorp"
-python scripts/download_lcsts_summary.py \
-  --root "${DATA_ROOT}/lcsts_summary" \
-  --train-size "${LCSTS_TRAIN_SIZE}" \
-  --valid-size "${LCSTS_VALID_SIZE}" \
-  --test-size "${LCSTS_TEST_SIZE}"
+if has_files \
+  "${DATA_ROOT}/multi30k/train.en" \
+  "${DATA_ROOT}/multi30k/train.de" \
+  "${DATA_ROOT}/multi30k/valid.en" \
+  "${DATA_ROOT}/multi30k/valid.de" \
+  "${DATA_ROOT}/multi30k/test.en" \
+  "${DATA_ROOT}/multi30k/test.de"; then
+  echo "==> Multi30k 已存在，跳过下载：${DATA_ROOT}/multi30k"
+else
+  python scripts/download_multi30k.py --root "${DATA_ROOT}/multi30k"
+fi
+
+if has_files \
+  "${DATA_ROOT}/tatoeba_en_zh/train.en" \
+  "${DATA_ROOT}/tatoeba_en_zh/train.zh" \
+  "${DATA_ROOT}/tatoeba_en_zh/valid.en" \
+  "${DATA_ROOT}/tatoeba_en_zh/valid.zh" \
+  "${DATA_ROOT}/tatoeba_en_zh/test.en" \
+  "${DATA_ROOT}/tatoeba_en_zh/test.zh"; then
+  echo "==> Tatoeba 英中语料已存在，跳过下载：${DATA_ROOT}/tatoeba_en_zh"
+else
+  python scripts/download_tatoeba_en_zh.py \
+    --root "${DATA_ROOT}/tatoeba_en_zh" \
+    --max-pairs 30000 \
+    --valid-size 1000 \
+    --test-size 1000
+fi
+
+if has_files \
+  "${DATA_ROOT}/ag_news/train.csv" \
+  "${DATA_ROOT}/ag_news/test.csv"; then
+  echo "==> AG News 已存在，跳过下载：${DATA_ROOT}/ag_news"
+else
+  python scripts/download_ag_news.py --root "${DATA_ROOT}/ag_news"
+fi
+
+if has_files \
+  "${DATA_ROOT}/chnsenticorp/train.tsv" \
+  "${DATA_ROOT}/chnsenticorp/valid.tsv" \
+  "${DATA_ROOT}/chnsenticorp/test.tsv"; then
+  echo "==> ChnSentiCorp 已存在，跳过下载：${DATA_ROOT}/chnsenticorp"
+else
+  python scripts/download_chnsenticorp.py --root "${DATA_ROOT}/chnsenticorp"
+fi
+
+if has_files \
+  "${DATA_ROOT}/lcsts_summary/train.src" \
+  "${DATA_ROOT}/lcsts_summary/train.tgt" \
+  "${DATA_ROOT}/lcsts_summary/valid.src" \
+  "${DATA_ROOT}/lcsts_summary/valid.tgt" \
+  "${DATA_ROOT}/lcsts_summary/test.src" \
+  "${DATA_ROOT}/lcsts_summary/test.tgt"; then
+  echo "==> LCSTS 摘要语料已存在，跳过下载：${DATA_ROOT}/lcsts_summary"
+else
+  python scripts/download_lcsts_summary.py \
+    --root "${DATA_ROOT}/lcsts_summary" \
+    --train-size "${LCSTS_TRAIN_SIZE}" \
+    --valid-size "${LCSTS_VALID_SIZE}" \
+    --test-size "${LCSTS_TEST_SIZE}"
+fi
 
 echo "==> 训练任务一：英德翻译"
 python scripts/train_translation.py \
