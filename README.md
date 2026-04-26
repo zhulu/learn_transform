@@ -63,6 +63,17 @@ python scripts/download_lcsts_summary.py \
   --test-size 4000
 ```
 
+如果遇到 Hugging Face `429 Too Many Requests` 限流，脚本会自动重试并默认断点续传。再次运行同一命令即可继续下载。想清空重下可以加：
+
+```bash
+python scripts/download_lcsts_summary.py \
+  --root dataset/lcsts_summary \
+  --train-size 100000 \
+  --valid-size 4000 \
+  --test-size 4000 \
+  --overwrite
+```
+
 脚本会生成现有 seq2seq 接口可直接使用的文件：
 
 ```text
