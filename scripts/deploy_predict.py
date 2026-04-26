@@ -19,6 +19,7 @@ from src.inference import greedy_translate, load_checkpoint
 TASK_MODEL_DIRS = {
     "en_de_translation": "multi30k_en_de",
     "en_zh_translation": "tatoeba_en_zh",
+    "lcsts_summary": "lcsts_summary",
     "ag_news": "ag_news_classifier",
     "zh_sentiment": "chnsenticorp",
 }
@@ -35,6 +36,7 @@ def main() -> None:
     示例：
         python predict.py --task en_de_translation --text "a man is riding a bike" --device cpu
         python predict.py --task zh_sentiment --text "房间很干净，服务也很好。" --device cpu
+        python predict.py --task lcsts_summary --text "国务院新闻办公室今天举行发布会。" --device cpu --max-len 40
     """
     parser = argparse.ArgumentParser(description="Unified inference entry for packaged Transformer models.")
     parser.add_argument(
@@ -54,7 +56,7 @@ def main() -> None:
     if not checkpoint.exists():
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint}")
 
-    if args.task in {"en_de_translation", "en_zh_translation"}:
+    if args.task in {"en_de_translation", "en_zh_translation", "lcsts_summary"}:
         model, src_vocab, tgt_vocab, config, device = load_checkpoint(checkpoint, args.device)
         output = greedy_translate(
             model,

@@ -33,6 +33,7 @@ model_cache = {}
 TASK_MODEL_DIRS = {
     "en_de_translation": "multi30k_en_de",
     "en_zh_translation": "tatoeba_en_zh",
+    "lcsts_summary": "lcsts_summary",
     "ag_news": "ag_news_classifier",
     "zh_sentiment": "chnsenticorp",
 }
@@ -51,7 +52,7 @@ def get_model(task: str):
     
     device = "cpu"
     
-    if task in {"en_de_translation", "en_zh_translation"}:
+    if task in {"en_de_translation", "en_zh_translation", "lcsts_summary"}:
         model_data = load_checkpoint(checkpoint_path, device)
         model_cache[task] = model_data
     elif task == "ag_news":
@@ -69,15 +70,16 @@ async def predict(request: PredictRequest):
         raise HTTPException(status_code=400, detail="Invalid task")
     
     try:
-        if request.task in {"en_de_translation", "en_zh_translation"}:
+        if request.task in {"en_de_translation", "en_zh_translation", "lcsts_summary"}:
             model, src_vocab, tgt_vocab, config, device = get_model(request.task)
+            max_len = 40 if request.task == "lcsts_summary" else 128
             output = greedy_translate(
                 model,
                 src_vocab,
                 tgt_vocab,
                 request.text,
                 device,
-                max_len=128,
+                max_len=max_len,
                 lowercase=config.lowercase,
                 src_char_level=config.src_char_level,
             )

@@ -226,6 +226,7 @@
                         <select id="task-select">
                             <option value="en_de_translation">英德翻译 (En -> De)</option>
                             <option value="en_zh_translation">英中翻译 (En -> Zh)</option>
+                            <option value="lcsts_summary">中文中心思想生成 (LCSTS)</option>
                             <option value="ag_news">英文新闻分类 (AG News)</option>
                             <option value="zh_sentiment">中文情感分类 (Sentiment)</option>
                         </select>
@@ -277,6 +278,8 @@
                 heads: '4',
                 d_model: '256',
                 data: '29,000 Pairs (Multi30k)',
+                context: '128 Tokens',
+                limit: '自动截断',
                 placeholder: 'A man in a blue shirt is standing in front of a building.'
             },
             'en_zh_translation': {
@@ -287,6 +290,8 @@
                 heads: '4',
                 d_model: '256',
                 data: '27,999 Pairs (Tatoeba)',
+                context: '80 Tokens (字符级)',
+                limit: '自动截断',
                 placeholder: 'I like learning new languages and meeting people.'
             },
             'ag_news': {
@@ -297,7 +302,21 @@
                 heads: '4',
                 d_model: '256',
                 data: '108,000 News (AG News)',
+                context: '128 Tokens',
+                limit: '自动截断',
                 placeholder: 'Global markets rallied today as tech shares surged following earnings.'
+            },
+            'lcsts_summary': {
+                tag: 'Encoder-Decoder',
+                architecture: 'Transformer Seq2Seq',
+                params: '约 9-12 Million',
+                layers: '3 Enc + 3 Dec',
+                heads: '4',
+                d_model: '256',
+                data: '100,000 Samples (LCSTS)',
+                context: '256 Tokens (字符级)',
+                limit: '生成上限 40 Tokens',
+                placeholder: '国务院新闻办公室今天举行发布会，介绍当前经济运行情况和下一阶段政策安排。'
             },
             'zh_sentiment': {
                 tag: 'Encoder-only',
@@ -307,6 +326,8 @@
                 heads: '4',
                 d_model: '256',
                 data: '9,146 Reviews (ChnSentiCorp)',
+                context: '256 Tokens (字符级)',
+                limit: '自动截断',
                 placeholder: '这家酒店的服务态度非常好，房间打扫得也很干净。'
             }
         };
@@ -332,6 +353,8 @@
             specsList.innerHTML = `
                 <div class="info-item"><span class="info-label">架构</span><span class="info-value">${spec.architecture}</span></div>
                 <div class="info-item"><span class="info-label">总参数量</span><span class="info-value">${spec.params}</span></div>
+                <div class="info-item"><span class="info-label">上下文窗口</span><span class="info-value">${spec.context}</span></div>
+                <div class="info-item"><span class="info-label">输入限制</span><span class="info-value" style="color: #e74c3c;">${spec.limit}</span></div>
                 <div class="info-item"><span class="info-label">网络层数</span><span class="info-value">${spec.layers}</span></div>
                 <div class="info-item"><span class="info-label">注意力头数</span><span class="info-value">${spec.heads}</span></div>
                 <div class="info-item"><span class="info-label">隐藏层维度</span><span class="info-value">${spec.d_model}</span></div>

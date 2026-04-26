@@ -2,12 +2,13 @@
 
 这是一个从零开始学习 Transformer 的小工程。代码尽量只依赖 PyTorch，把词表、数据读取、mask、模型结构、训练循环、测试评估和推理流程都显式写出来。
 
-当前包含四个任务，默认参数都按 RTX/ATX 3090 24G 显存做了保守设计：
+当前包含五个任务，默认参数都按 RTX/ATX 3090 24G 显存做了保守设计：
 
 1. **英德翻译**：Multi30k，encoder-decoder Transformer。
 2. **英中翻译**：OPUS Tatoeba Mandarin Chinese-English 小语料，中文端默认字符级 token。
 3. **英文新闻分类**：AG News，encoder-only Transformer。
 4. **中文情感分类**：ChnSentiCorp，中文评论二分类，默认字符级 token。
+5. **中文中心思想/摘要生成**：LCSTS，复用 encoder-decoder seq2seq 训练接口。
 
 ## 环境准备
 
@@ -32,6 +33,7 @@ deploy_package/   # 打包好的部署包 (包含模型权重和推理源码)
 - **模型规格卡片**：实时展示当前任务的模型参数（Params）、隐藏层维度、层数及训练语料规模。
 - **可视化推理**：
     - 翻译任务：实时生成译文。
+    - 摘要任务：输入中文短文，生成中心思想。
     - 分类任务：以进度条形式展示 Softmax 置信度分数。
 - **轻量化部署**：针对 CPU 环境优化，支持模型按需加载。
 
@@ -43,6 +45,25 @@ deploy_package/   # 打包好的部署包 (包含模型权重和推理源码)
 ## 核心任务说明
 
 (各任务具体训练和评估命令请参考 scripts/ 目录下的脚本或原 README 详细文档)
+
+## 一键训练
+
+顺序下载数据并训练五个任务：
+
+```bash
+bash scripts/train_all.sh
+```
+
+任务 5 的常用覆盖参数：
+
+```bash
+LCSTS_TRAIN_SIZE=100000 \
+LCSTS_VALID_SIZE=4000 \
+LCSTS_TEST_SIZE=4000 \
+LCSTS_EPOCHS=20 \
+LCSTS_BATCH=64 \
+bash scripts/train_all.sh
+```
 
 ## 可选任务：中文中心思想/摘要生成
 
@@ -140,6 +161,16 @@ python scripts/translate.py \
 
 ```bash
 python scripts/package_deploy.py --checkpoint-root checkpoints --output deploy_package
+```
+
+部署包统一推理入口已支持任务 5：
+
+```bash
+python predict.py \
+  --task lcsts_summary \
+  --text "国务院新闻办公室今天举行发布会，介绍当前经济运行情况和下一阶段政策安排。" \
+  --device cpu \
+  --max-len 40
 ```
 
 ## 数据与模型

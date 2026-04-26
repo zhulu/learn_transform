@@ -17,6 +17,11 @@ TASKS = {
         "required": ["best.pt", "config.json", "src_vocab.json", "tgt_vocab.json"],
         "description": "英中翻译",
     },
+    "lcsts_summary": {
+        "kind": "translation",
+        "required": ["best.pt", "config.json", "src_vocab.json", "tgt_vocab.json"],
+        "description": "中文中心思想/摘要生成",
+    },
     "ag_news_classifier": {
         "kind": "classification",
         "required": ["best.pt", "config.json", "vocab.json"],
@@ -89,6 +94,7 @@ def write_deploy_readme(output: Path, manifest: dict) -> None:
         "python predict.py --task en_zh_translation --text \"I like learning new languages.\" --device cpu",
         "python predict.py --task ag_news --text \"Apple shares rose after revenue beat expectations.\" --device cpu",
         "python predict.py --task zh_sentiment --text \"房间很干净，服务也很好。\" --device cpu",
+        "python predict.py --task lcsts_summary --text \"国务院新闻办公室今天举行发布会，介绍当前经济运行情况。\" --device cpu --max-len 40",
         "```",
         "",
         "## 已包含模型",
